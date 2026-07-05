@@ -6,8 +6,9 @@ Item {
     implicitWidth: label.implicitWidth + 26
     implicitHeight: parent.height
 
-    // Expose hover state so shell.qml can drive the popup window
-    readonly property bool showCalendar: hoverHandler.hovered
+    property bool popupHovered: false
+    property bool _showPopup: false
+    readonly property bool showCalendar: _showPopup || popupHovered
 
     SystemClock {
         id: clock
@@ -61,6 +62,20 @@ Item {
 
         HoverHandler {
             id: hoverHandler
+            onHoveredChanged: {
+                if (hovered) {
+                    hidetimer.stop();
+                    root._showPopup = true;
+                } else {
+                    hidetimer.restart();
+                }
+            }
+        }
+
+        Timer {
+            id: hidetimer
+            interval: 300
+            onTriggered: root._showPopup = false
         }
     }
 }

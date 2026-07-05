@@ -8,6 +8,7 @@ PanelWindow {
     id: root
     required property ShellScreen targetScreen
     required property int barHeight
+    required property var clockWidget
 
     screen: targetScreen
     anchors {
@@ -127,6 +128,10 @@ PanelWindow {
             color: "#101010"
             border.color: "#2a2a2a"
             border.width: 1
+
+            HoverHandler {
+                onHoveredChanged: root.clockWidget.popupHovered = hovered
+            }
 
             opacity: root.visible ? 1 : 0
             Behavior on opacity {

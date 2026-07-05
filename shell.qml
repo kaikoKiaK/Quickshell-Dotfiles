@@ -47,6 +47,7 @@ ShellRoot {
             CalendarPopout {
                 targetScreen: screenRoot.modelData
                 barHeight: bar.implicitHeight
+                clockWidget: bar.clockWidget
                 visible: bar.clockWidget.showCalendar
             }
 
