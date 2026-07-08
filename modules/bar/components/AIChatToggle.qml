@@ -104,15 +104,11 @@ Item {
         PanelWindow {
             id: chatPanel
             screen: root.targetScreen
-            visible: root.popoutOpen
+            visible: internalVisible
+
+            property bool internalVisible: false
 
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-
-            onVisibleChanged: {
-                if (visible) {
-                    Qt.callLater(chatWindowInstance.focusInput);
-                }
-            }
 
             anchors {
                 top: true
@@ -122,7 +118,43 @@ Item {
             implicitWidth: 560
             implicitHeight: 1030
 
+            margins.left: root.popoutOpen ? 0 : -implicitWidth
+
+            Behavior on margins.left {
+                NumberAnimation {
+                    duration: 250
+                    easing.type: Easing.OutCubic
+                }
+            }
+
             color: "transparent"
+
+            onVisibleChanged: {
+                if (visible) {
+                    Qt.callLater(chatWindowInstance.focusInput);
+                }
+            }
+
+            Timer {
+                id: hideTimer
+                interval: 260 // slightly longer than the Behavior duration
+                onTriggered: chatPanel.internalVisible = false
+            }
+
+            Connections {
+                target: root
+                function onPopoutOpenChanged() {
+                    if (root.popoutOpen) {
+                        chatPanel.internalVisible = true;
+                    } else {
+                        hideTimer.start();
+                    }
+                }
+            }
+
+            Component.onCompleted: {
+                internalVisible = root.popoutOpen;
+            }
 
             Rectangle {
                 anchors.fill: parent

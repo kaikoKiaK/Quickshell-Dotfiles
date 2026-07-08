@@ -10,7 +10,10 @@ Item {
     property string modelName: "qwen3.5:9b"
     property string ollamaUrl: "http://127.0.0.1:11434/api/chat"
     property bool waitingForResponse: false
+    property var availableModels: []
     signal escapePressed
+
+    Component.onCompleted: fetchModels()
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
@@ -21,6 +24,26 @@ Item {
 
     ListModel {
         id: chatModel
+    }
+
+    function fetchModels() {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "http://127.0.0.1:11434/api/tags");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    const names = response.models.map(m => m.name);
+                    root.availableModels = names;
+                    if (names.indexOf(root.modelName) === -1 && names.length > 0) {
+                        root.modelName = names[0];
+                    }
+                } catch (e) {
+                    console.log("Failed to parse model list:", e);
+                }
+            }
+        };
+        xhr.send();
     }
 
     function clearChat() {
@@ -164,6 +187,76 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
+
+            ComboBox {
+                id: modelSelector
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 28
+                model: root.availableModels
+                currentIndex: availableModels.indexOf(root.modelName)
+                onActivated: root.modelName = availableModels[currentIndex]
+
+                font.family: "JetBrainsMono Nerd Font"
+                font.pixelSize: 15
+
+                contentItem: Text {
+                    text: modelSelector.displayText
+                    color: "#eeeeee"
+                    font: modelSelector.font
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: 8
+                    elide: Text.ElideRight
+                }
+
+                background: Rectangle {
+                    color: "#1e1f20"
+                    radius: 7
+                    border.color: "#3a3a3a"
+                    border.width: 1
+                }
+
+                popup: Popup {
+                    y: modelSelector.height + 4
+                    width: modelSelector.width
+                    implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
+                    padding: 4
+
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: contentHeight
+                        model: modelSelector.popup.visible ? modelSelector.delegateModel : null
+
+                        ScrollIndicator.vertical: ScrollIndicator {}
+                    }
+
+                    background: Rectangle {
+                        color: "#1e1f20"
+                        radius: 7
+                        border.color: "#3a3a3a"
+                        border.width: 1
+                    }
+                }
+
+                delegate: ItemDelegate {
+                    id: delegateItem
+                    required property var modelData
+                    required property int index
+
+                    width: modelSelector.width
+                    contentItem: Text {
+                        text: delegateItem.modelData
+                        color: "#eeeeee"
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 15
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    highlighted: modelSelector.highlightedIndex === delegateItem.index
+                    background: Rectangle {
+                        color: delegateItem.highlighted ? "#2a2a2a" : "transparent"
+                    }
+                }
+            }
 
             Item {
                 Layout.fillWidth: true
