@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 
 Item {
     id: root
@@ -20,6 +21,10 @@ Item {
 
     ListModel {
         id: chatModel
+    }
+
+    function clearChat() {
+        chatModel.clear();
     }
 
     function focusInput() {
@@ -131,6 +136,81 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         spacing: 8
+
+        RowLayout {
+            Layout.fillWidth: true
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            RoundButton {
+                id: clearButton
+                implicitWidth: 32
+                implicitHeight: 32
+                onClicked: root.clearChat()
+
+                HoverHandler {
+                    id: hoverHandler
+                }
+
+                contentItem: Item {
+                    anchors.fill: parent
+
+                    Item {
+                        id: iconWrapper
+                        anchors.centerIn: parent
+                        width: 16
+                        height: 16
+                        scale: hoverHandler.hovered ? 1.1 : 1.0
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 150
+                                easing.type: Easing.OutBack
+                            }
+                        }
+
+                        Image {
+                            id: clearIconSource
+                            anchors.fill: parent
+                            source: "../bar/sources/svgs/clearBrush.svg"
+                            sourceSize.width: 16
+                            sourceSize.height: 16
+                            fillMode: Image.PreserveAspectFit
+                            visible: false
+                            cache: false
+                        }
+
+                        MultiEffect {
+                            anchors.fill: clearIconSource
+                            source: clearIconSource
+                            colorization: 1.0
+                            colorizationColor: "#eeeeee"
+                        }
+                    }
+                }
+                background: Rectangle {
+                    radius: width / 2
+                    color: clearButton.hovered ? "#2a2a2a" : "transparent"
+                    border.color: "#3a3a3a"
+                    border.width: 1
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.NoButton
+                    hoverEnabled: true
+                }
+            }
+        }
 
         ListView {
             id: chatView

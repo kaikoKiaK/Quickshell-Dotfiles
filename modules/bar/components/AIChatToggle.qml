@@ -93,7 +93,7 @@ Item {
 
         Loader {
             id: popoutLoader
-            active: root.popoutOpen
+            active: true
             sourceComponent: popoutComponent
         }
     }
@@ -104,12 +104,14 @@ Item {
         PanelWindow {
             id: chatPanel
             screen: root.targetScreen
-            visible: true
+            visible: root.popoutOpen
 
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
-            Component.onCompleted: {
-                Qt.callLater(chatWindowInstance.focusInput);
+            onVisibleChanged: {
+                if (visible) {
+                    Qt.callLater(chatWindowInstance.focusInput);
+                }
             }
 
             anchors {
