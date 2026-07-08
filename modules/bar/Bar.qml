@@ -49,9 +49,17 @@ PanelWindow {
             height: parent.height - 10
         }
 
+        AIChatToggle {
+            id: aiChatToggle
+            targetScreen: bar.targetScreen
+            anchors.left: audioWidget.right
+            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height - 10
+        }
+
         NetworkWidget {
             id: networkWidget
-            anchors.left: audioWidget.right
+            anchors.left: aiChatToggle.right
             anchors.verticalCenter: parent.verticalCenter
             height: parent.height - 10
         }
