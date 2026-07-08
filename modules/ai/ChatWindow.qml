@@ -86,40 +86,66 @@ Item {
             return;
         chatModel.append({
             msgRole: "user",
-            msgText: userText
+            msgText: userText,
+            msgDone: true
         });
-        const historyForRequest = buildHistory(); // snapshot before placeholder
+        const historyForRequest = buildHistory();
         chatModel.append({
             msgRole: "assistant",
-            msgText: "…"
+            msgText: "",
+            msgDone: false
         });
         const assistantIndex = chatModel.count - 1;
         waitingForResponse = true;
+
+        let accumulatedText = "";
+        let processedLength = 0;
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", root.ollamaUrl);
         xhr.setRequestHeader("Content-Type", "application/json");
 
         xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.LOADING || xhr.readyState === XMLHttpRequest.DONE) {
+                const newText = xhr.responseText.substring(processedLength);
+                processedLength = xhr.responseText.length;
+
+                if (newText.length > 0) {
+                    const lines = newText.split("\n");
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line.length === 0)
+                            continue;
+                        try {
+                            const chunk = JSON.parse(line);
+                            if (chunk.message && chunk.message.content) {
+                                accumulatedText += chunk.message.content;
+                                chatModel.set(assistantIndex, {
+                                    msgRole: "assistant",
+                                    msgText: accumulatedText,
+                                    msgDone: false
+                                });
+                            }
+                        } catch (e) {
+                            // incomplete line straddling a chunk boundary, ignore
+                        }
+                    }
+                }
+            }
+
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 waitingForResponse = false;
                 if (xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        chatModel.set(assistantIndex, {
-                            msgRole: "assistant",
-                            msgText: response.message.content
-                        });
-                    } catch (e) {
-                        chatModel.set(assistantIndex, {
-                            msgRole: "assistant",
-                            msgText: "Parse error: " + e
-                        });
-                    }
-                } else {
                     chatModel.set(assistantIndex, {
                         msgRole: "assistant",
-                        msgText: "Error reaching Ollama (status " + xhr.status + "). Is `ollama serve` running?"
+                        msgText: accumulatedText,
+                        msgDone: true
+                    });
+                } else if (accumulatedText.length === 0) {
+                    chatModel.set(assistantIndex, {
+                        msgRole: "assistant",
+                        msgText: "Error reaching Ollama (status " + xhr.status + "). Is `ollama serve` running?",
+                        msgDone: true
                     });
                 }
             }
@@ -128,11 +154,10 @@ Item {
         xhr.send(JSON.stringify({
             model: root.modelName,
             messages: historyForRequest,
-            stream: false,
+            stream: true,
             think: false
         }));
     }
-
     ColumnLayout {
         anchors.fill: parent
         spacing: 8
@@ -223,67 +248,89 @@ Item {
             delegate: Item {
                 required property string msgRole
                 required property string msgText
+                required property bool msgDone
                 width: chatView.width
                 height: bubble.height + 8
 
                 Rectangle {
                     id: bubble
-                    width: Math.min(contentColumn.implicitWidth + 16, chatView.width * 0.9)
-                    height: contentColumn.implicitHeight + 16
+                    width: Math.min(bubbleContent.implicitWidth + 16, chatView.width * 0.9)
+                    height: bubbleContent.implicitHeight + 16
                     anchors.right: msgRole === "user" ? parent.right : undefined
                     anchors.left: msgRole === "user" ? undefined : parent.left
                     radius: 10
                     color: msgRole === "user" ? "#8caaee" : "#1c1c1c"
 
-                    Column {
-                        id: contentColumn
+                    Loader {
+                        id: bubbleContent
                         anchors.fill: parent
                         anchors.margins: 8
-                        spacing: 6
+                        sourceComponent: msgDone ? formattedComponent : plainComponent
+                    }
 
-                        Repeater {
-                            model: root.parseSegments(msgText)
+                    Component {
+                        id: plainComponent
+                        Text {
+                            width: Math.min(implicitWidth, chatView.width * 0.75)
+                            text: msgText
+                            textFormat: Text.PlainText
+                            wrapMode: Text.Wrap
+                            color: msgRole === "user" ? "#101010" : "#eeeeee"
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: 15
+                        }
+                    }
 
-                            delegate: Loader {
-                                required property var modelData
-                                sourceComponent: modelData.type === "code" ? codeBlockComponent : textComponent
+                    Component {
+                        id: formattedComponent
+                        Column {
+                            id: contentColumn
+                            spacing: 6
 
-                                property var segmentData: modelData
+                            Repeater {
+                                model: root.parseSegments(msgText)
 
-                                Component {
-                                    id: textComponent
-                                    Text {
-                                        width: Math.min(implicitWidth, chatView.width * 0.75)
-                                        text: segmentData.content
-                                        textFormat: Text.MarkdownText
-                                        wrapMode: Text.Wrap
-                                        color: msgRole === "user" ? "#101010" : "#eeeeee"
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 15
-                                    }
-                                }
+                                delegate: Loader {
+                                    required property var modelData
+                                    sourceComponent: modelData.type === "code" ? codeBlockComponent : textComponent
 
-                                Component {
-                                    id: codeBlockComponent
-                                    Rectangle {
-                                        width: codeText.implicitWidth + 20
-                                        height: codeText.implicitHeight + 20
-                                        radius: 6
-                                        color: "#0d0d0d"
-                                        border.color: "#333333"
-                                        border.width: 1
+                                    property var segmentData: modelData
 
+                                    Component {
+                                        id: textComponent
                                         Text {
-                                            id: codeText
-                                            anchors.margins: 10
-                                            anchors.top: parent.top
-                                            anchors.left: parent.left
-                                            width: Math.min(implicitWidth, chatView.width * 0.75) - 20
+                                            width: Math.min(implicitWidth, chatView.width * 0.75)
                                             text: segmentData.content
+                                            textFormat: Text.MarkdownText
                                             wrapMode: Text.Wrap
-                                            color: "#a6e3a1"
+                                            color: msgRole === "user" ? "#101010" : "#eeeeee"
                                             font.family: "JetBrainsMono Nerd Font"
-                                            font.pixelSize: 13
+                                            font.pixelSize: 15
+                                        }
+                                    }
+
+                                    Component {
+                                        id: codeBlockComponent
+                                        Rectangle {
+                                            width: codeText.implicitWidth + 20
+                                            height: codeText.implicitHeight + 20
+                                            radius: 6
+                                            color: "#0d0d0d"
+                                            border.color: "#333333"
+                                            border.width: 1
+
+                                            Text {
+                                                id: codeText
+                                                anchors.margins: 10
+                                                anchors.top: parent.top
+                                                anchors.left: parent.left
+                                                width: Math.min(implicitWidth, chatView.width * 0.75) - 20
+                                                text: segmentData.content
+                                                wrapMode: Text.Wrap
+                                                color: "#a6e3a1"
+                                                font.family: "JetBrainsMono Nerd Font"
+                                                font.pixelSize: 13
+                                            }
                                         }
                                     }
                                 }
