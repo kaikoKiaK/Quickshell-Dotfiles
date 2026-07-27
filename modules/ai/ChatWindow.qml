@@ -415,6 +415,7 @@ Item {
             }
 
             RoundButton {
+                id: sendMessageButton
                 text: ""
                 implicitWidth: 40
                 implicitHeight: 40
@@ -429,6 +430,8 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.NoButton
+                    hoverEnabled: true
                 }
             }
         }
