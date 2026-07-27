@@ -115,10 +115,11 @@ Item {
                 left: true
             }
 
-            implicitWidth: 560
-            implicitHeight: 1030
+            implicitWidth: 720
+            implicitHeight: 1025
 
-            margins.left: root.popoutOpen ? 0 : -implicitWidth
+            margins.left: root.popoutOpen ? 5 : -implicitWidth
+            margins.top: 5
 
             Behavior on margins.left {
                 NumberAnimation {
@@ -158,8 +159,8 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                topLeftRadius: 0
-                bottomLeftRadius: 0
+                topLeftRadius: 8
+                bottomLeftRadius: 8
                 topRightRadius: 8
                 bottomRightRadius: 8
                 color: "#101010"

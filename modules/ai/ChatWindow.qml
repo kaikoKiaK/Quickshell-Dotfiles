@@ -4,10 +4,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
+import "logic.js" as Logic
 
 Item {
     id: root
-    property string modelName: "qwen3.5:9b"
+    property string modelName: "gemma4:e2b"
     property string ollamaUrl: "http://127.0.0.1:11434/api/chat"
     property bool waitingForResponse: false
     property var availableModels: []
@@ -27,159 +28,22 @@ Item {
     }
 
     function fetchModels() {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", "http://127.0.0.1:11434/api/tags");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    const names = response.models.map(m => m.name);
-                    root.availableModels = names;
-                    if (names.indexOf(root.modelName) === -1 && names.length > 0) {
-                        root.modelName = names[0];
-                    }
-                } catch (e) {
-                    console.log("Failed to parse model list:", e);
-                }
-            }
-        };
-        xhr.send();
+        Logic.fetchModels(root);
     }
-
     function clearChat() {
-        chatModel.clear();
+        Logic.clearChat(chatModel);
     }
-
     function focusInput() {
-        inputField.forceActiveFocus();
+        Logic.focusInput(inputField);
     }
-
     function parseSegments(msgText) {
-        const segments = [];
-        const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
-        let lastIndex = 0;
-        let match;
-
-        while ((match = codeBlockRegex.exec(msgText)) !== null) {
-            if (match.index > lastIndex) {
-                segments.push({
-                    type: "text",
-                    content: msgText.slice(lastIndex, match.index)
-                });
-            }
-            segments.push({
-                type: "code",
-                language: match[1],
-                content: match[2].replace(/\n$/, "")
-            });
-            lastIndex = codeBlockRegex.lastIndex;
-        }
-
-        if (lastIndex < msgText.length) {
-            segments.push({
-                type: "text",
-                content: msgText.slice(lastIndex)
-            });
-        }
-
-        if (segments.length === 0) {
-            segments.push({
-                type: "text",
-                content: msgText
-            });
-        }
-
-        return segments;
+        return Logic.parseSegments(msgText);
     }
-
     function buildHistory() {
-        let history = [];
-        for (let i = 0; i < chatModel.count; i++) {
-            let m = chatModel.get(i);
-            history.push({
-                role: m.msgRole,
-                content: m.msgText
-            });
-        }
-        return history;
+        return Logic.buildHistory(chatModel);
     }
-
     function sendMessage(userText) {
-        if (userText.trim().length === 0 || waitingForResponse)
-            return;
-        chatModel.append({
-            msgRole: "user",
-            msgText: userText,
-            msgDone: true
-        });
-        const historyForRequest = buildHistory();
-        chatModel.append({
-            msgRole: "assistant",
-            msgText: "",
-            msgDone: false
-        });
-        const assistantIndex = chatModel.count - 1;
-        waitingForResponse = true;
-
-        let accumulatedText = "";
-        let processedLength = 0;
-
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", root.ollamaUrl);
-        xhr.setRequestHeader("Content-Type", "application/json");
-
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.LOADING || xhr.readyState === XMLHttpRequest.DONE) {
-                const newText = xhr.responseText.substring(processedLength);
-                processedLength = xhr.responseText.length;
-
-                if (newText.length > 0) {
-                    const lines = newText.split("\n");
-                    for (let i = 0; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (line.length === 0)
-                            continue;
-                        try {
-                            const chunk = JSON.parse(line);
-                            if (chunk.message && chunk.message.content) {
-                                accumulatedText += chunk.message.content;
-                                chatModel.set(assistantIndex, {
-                                    msgRole: "assistant",
-                                    msgText: accumulatedText,
-                                    msgDone: false
-                                });
-                            }
-                        } catch (e) {
-                            // incomplete line straddling a chunk boundary, ignore
-                        }
-                    }
-                }
-            }
-
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                waitingForResponse = false;
-                if (xhr.status === 200) {
-                    chatModel.set(assistantIndex, {
-                        msgRole: "assistant",
-                        msgText: accumulatedText,
-                        msgDone: true
-                    });
-                } else if (accumulatedText.length === 0) {
-                    chatModel.set(assistantIndex, {
-                        msgRole: "assistant",
-                        msgText: "Error reaching Ollama (status " + xhr.status + "). Is `ollama serve` running?",
-                        msgDone: true
-                    });
-                }
-            }
-        };
-
-        xhr.send(JSON.stringify({
-            model: root.modelName,
-            messages: historyForRequest,
-            stream: true,
-            think: false
-        }));
+        Logic.sendMessage(userText, root, chatModel, inputField);
     }
     ColumnLayout {
         anchors.fill: parent
@@ -358,7 +222,101 @@ Item {
                         id: bubbleContent
                         anchors.fill: parent
                         anchors.margins: 8
-                        sourceComponent: msgDone ? formattedComponent : plainComponent
+                        sourceComponent: !msgDone && msgText === "" ? thinkingComponent : msgDone ? formattedComponent : plainComponent
+                    }
+
+                    Component {
+                        id: thinkingComponent
+                        Item {
+                            implicitWidth: 30
+                            implicitHeight: 20
+
+                            readonly property real dotSize: 6
+                            readonly property real baseY: implicitHeight / 2 - dotSize / 2
+
+                            property real offset0: 0
+                            property real offset1: 0
+                            property real offset2: 0
+
+                            Rectangle {
+                                x: 2
+                                y: baseY + offset0
+                                width: dotSize
+                                height: dotSize
+                                radius: dotSize / 2
+                                color: "#eeeeee"
+                            }
+                            Rectangle {
+                                x: 12
+                                y: baseY + offset1
+                                width: dotSize
+                                height: dotSize
+                                radius: dotSize / 2
+                                color: "#eeeeee"
+                            }
+                            Rectangle {
+                                x: 22
+                                y: baseY + offset2
+                                width: dotSize
+                                height: dotSize
+                                radius: dotSize / 2
+                                color: "#eeeeee"
+                            }
+
+                            SequentialAnimation on offset0 {
+                                loops: Animation.Infinite
+                                PropertyAnimation {
+                                    to: -6
+                                    duration: 300
+                                    easing.type: Easing.OutQuad
+                                }
+                                PropertyAnimation {
+                                    to: 0
+                                    duration: 300
+                                    easing.type: Easing.InQuad
+                                }
+                                PauseAnimation {
+                                    duration: 400
+                                }
+                            }
+
+                            SequentialAnimation on offset1 {
+                                loops: Animation.Infinite
+                                PauseAnimation {
+                                    duration: 200
+                                }
+                                PropertyAnimation {
+                                    to: -6
+                                    duration: 300
+                                    easing.type: Easing.OutQuad
+                                }
+                                PropertyAnimation {
+                                    to: 0
+                                    duration: 300
+                                    easing.type: Easing.InQuad
+                                }
+                                PauseAnimation {
+                                    duration: 200
+                                }
+                            }
+
+                            SequentialAnimation on offset2 {
+                                loops: Animation.Infinite
+                                PauseAnimation {
+                                    duration: 400
+                                }
+                                PropertyAnimation {
+                                    to: -6
+                                    duration: 300
+                                    easing.type: Easing.OutQuad
+                                }
+                                PropertyAnimation {
+                                    to: 0
+                                    duration: 300
+                                    easing.type: Easing.InQuad
+                                }
+                            }
+                        }
                     }
 
                     Component {
@@ -441,7 +399,7 @@ Item {
             TextField {
                 id: inputField
                 Layout.fillWidth: true
-                placeholderText: "Ask something..."
+                placeholderText: "Ask anything..."
                 color: "#eeeeee"
                 placeholderTextColor: "#888888"
                 padding: 10
