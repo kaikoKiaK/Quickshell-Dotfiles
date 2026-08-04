@@ -57,6 +57,12 @@ ShellRoot {
                 audioWidget: bar.audioWidget
             }
 
+            MonitorsPopout {
+                targetScreen: screenRoot.modelData
+                barHeight: bar.implicitHeight
+                monitorsWidget: bar.monitorsWidget
+            }
+
             Launcher {
                 id: launcher
                 targetScreen: screenRoot.modelData

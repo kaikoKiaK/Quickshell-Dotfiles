@@ -1,41 +1,14 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
 Item {
     id: root
     implicitWidth: iconText.implicitWidth + 26
     implicitHeight: parent.height
 
-    property bool isNightMode: false
-
-    // Read initial state on startup
-    Component.onCompleted: stateReader.running = true
-
-    Process {
-        id: stateReader
-        command: ["sh", "-c", "ddcutil --bus=3 getvcp 10 | awk -F'=' '/current value/ {print $2}' | awk '{print $1}' | tr -d ','"]
-        stdout: SplitParser {
-            onRead: function (line) {
-                var brightness = parseInt(line.trim());
-                root.isNightMode = brightness === 0;
-            }
-        }
-    }
-
-    Process {
-        id: nightModeOn
-        command: ["sh", "-c", "ddcutil --bus=9 setvcp 10 0 & ddcutil --bus=11 setvcp 10 0 & hyprctl hyprsunset temperature 2500; hyprctl hyprsunset gamma 80"]
-        onRunningChanged: if (!running)
-            root.isNightMode = true
-    }
-
-    Process {
-        id: nightModeOff
-        command: ["sh", "-c", "ddcutil --bus=9 setvcp 10 100 & ddcutil --bus=11 setvcp 10 100 & hyprctl hyprsunset temperature 6500; hyprctl hyprsunset gamma 100"]
-        onRunningChanged: if (!running)
-            root.isNightMode = false
-    }
+    property bool popupHovered: false
+    property bool _showPopup: false
+    readonly property bool showMonitors: _showPopup || popupHovered
 
     Rectangle {
         anchors.fill: parent
@@ -52,7 +25,8 @@ Item {
             bottomRightRadius: 0
             topLeftRadius: 5
             bottomLeftRadius: 5
-            border.color: root.isNightMode ? "#e8ae0e" : "#eeeeee"
+            border.color: "#eeeeee"
+            border.width: 1
             opacity: hoverHandler.hovered ? 0.35 : 0
             Behavior on opacity {
                 NumberAnimation {
@@ -65,7 +39,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
-            color: root.isNightMode ? "#e8ae0e" : "#ffffff"
+            color: "#ffffff"
             topRightRadius: 0
             bottomRightRadius: 0
             topLeftRadius: 5
@@ -82,8 +56,8 @@ Item {
         Text {
             id: iconText
             anchors.centerIn: parent
-            text: root.isNightMode ? "" : "󰌵"
-            color: root.isNightMode ? "#e8ae0e" : "#eeeeee"
+            text: ""
+            color: "#eeeeee"
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 18
 
@@ -101,22 +75,23 @@ Item {
             }
         }
 
-        TapHandler {
+        HoverHandler {
+            id: hoverHandler
             cursorShape: Qt.PointingHandCursor
-            onTapped: {
-                if (root.isNightMode) {
-                    nightModeOff.running = false;
-                    Qt.callLater(() => nightModeOff.running = true);
+            onHoveredChanged: {
+                if (hovered) {
+                    hidetimer.stop();
+                    root._showPopup = true;
                 } else {
-                    nightModeOn.running = false;
-                    Qt.callLater(() => nightModeOn.running = true);
+                    hidetimer.restart();
                 }
             }
         }
 
-        HoverHandler {
-            id: hoverHandler
-            cursorShape: Qt.PointingHandCursor
+        Timer {
+            id: hidetimer
+            interval: 300
+            onTriggered: root._showPopup = false
         }
     }
 }

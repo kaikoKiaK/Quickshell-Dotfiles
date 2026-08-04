@@ -121,7 +121,7 @@ PanelWindow {
         Rectangle {
             id: calendarPopout
             width: 390
-            height: 230
+            height: 260
             y: 0
             anchors.horizontalCenter: parent.horizontalCenter
             radius: 8

@@ -20,6 +20,7 @@ PanelWindow {
 
     property alias audioWidget: audioWidget
     property alias clockWidget: clockWidget
+    property alias monitorsWidget: monitorsWidget
 
     Item {
         anchors.fill: parent
@@ -33,8 +34,8 @@ PanelWindow {
             screen: bar.targetScreen
         }
 
-        NightModeWidget {
-            id: nightModeWidget
+        MonitorsWidget {
+            id: monitorsWidget
             anchors.left: workspacesWidget.right
             anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
@@ -43,7 +44,7 @@ PanelWindow {
 
         AudioWidget {
             id: audioWidget
-            anchors.left: nightModeWidget.right
+            anchors.left: monitorsWidget.right
             anchors.leftMargin: -1
             anchors.verticalCenter: parent.verticalCenter
             height: parent.height - 10
