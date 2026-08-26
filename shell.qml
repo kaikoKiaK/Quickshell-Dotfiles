@@ -5,7 +5,9 @@ import QtQuick
 import Quickshell.Io
 import Quickshell.Hyprland
 import "modules/bar/"
-import "modules/bar/popouts"
+import "modules/bar/popouts/Calendar"
+import "modules/bar/popouts/Media"
+import "modules/bar/popouts/Monitors"
 import "modules/launcher/"
 import "modules/wallpaperChanger"
 

@@ -27,7 +27,7 @@ Singleton {
         onRunningChanged: {
             if (!running) {
                 root.wallpapers = root.wallpapers.slice();
-                root.currentIndex = 0;
+                root.currentIndex = Math.floor(Math.random() * root.wallpapers.length);
             }
         }
     }
