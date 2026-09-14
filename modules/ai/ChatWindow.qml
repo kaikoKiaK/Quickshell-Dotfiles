@@ -57,8 +57,8 @@ Item {
                 Layout.preferredWidth: 200
                 Layout.preferredHeight: 28
                 model: root.availableModels
-                currentIndex: availableModels.indexOf(root.modelName)
-                onActivated: root.modelName = availableModels[currentIndex]
+                currentIndex: root.availableModels.indexOf(root.modelName)
+                onActivated: root.modelName = root.availableModels[currentIndex]
 
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
@@ -203,6 +203,7 @@ Item {
             clip: true
 
             delegate: Item {
+                id: messageItem
                 required property string msgRole
                 required property string msgText
                 required property bool msgDone
@@ -213,21 +214,22 @@ Item {
                     id: bubble
                     width: Math.min(bubbleContent.implicitWidth + 16, chatView.width * 0.9)
                     height: bubbleContent.implicitHeight + 16
-                    anchors.right: msgRole === "user" ? parent.right : undefined
-                    anchors.left: msgRole === "user" ? undefined : parent.left
+                    anchors.right: messageItem.msgRole === "user" ? parent.right : undefined
+                    anchors.left: messageItem.msgRole === "user" ? undefined : parent.left
                     radius: 10
-                    color: msgRole === "user" ? "#8caaee" : "#1c1c1c"
+                    color: messageItem.msgRole === "user" ? "#8caaee" : "#1c1c1c"
 
                     Loader {
                         id: bubbleContent
                         anchors.fill: parent
                         anchors.margins: 8
-                        sourceComponent: !msgDone && msgText === "" ? thinkingComponent : msgDone ? formattedComponent : plainComponent
+                        sourceComponent: !messageItem.msgDone && messageItem.msgText === "" ? thinkingComponent : messageItem.msgDone ? formattedComponent : plainComponent
                     }
 
                     Component {
                         id: thinkingComponent
                         Item {
+                            id: thinkingDots
                             implicitWidth: 30
                             implicitHeight: 20
 
@@ -240,26 +242,26 @@ Item {
 
                             Rectangle {
                                 x: 2
-                                y: baseY + offset0
-                                width: dotSize
-                                height: dotSize
-                                radius: dotSize / 2
+                                y: thinkingDots.baseY + thinkingDots.offset0
+                                width: thinkingDots.dotSize
+                                height: thinkingDots.dotSize
+                                radius: thinkingDots.dotSize / 2
                                 color: "#eeeeee"
                             }
                             Rectangle {
                                 x: 12
-                                y: baseY + offset1
-                                width: dotSize
-                                height: dotSize
-                                radius: dotSize / 2
+                                y: thinkingDots.baseY + thinkingDots.offset1
+                                width: thinkingDots.dotSize
+                                height: thinkingDots.dotSize
+                                radius: thinkingDots.dotSize / 2
                                 color: "#eeeeee"
                             }
                             Rectangle {
                                 x: 22
-                                y: baseY + offset2
-                                width: dotSize
-                                height: dotSize
-                                radius: dotSize / 2
+                                y: thinkingDots.baseY + thinkingDots.offset2
+                                width: thinkingDots.dotSize
+                                height: thinkingDots.dotSize
+                                radius: thinkingDots.dotSize / 2
                                 color: "#eeeeee"
                             }
 
@@ -323,10 +325,10 @@ Item {
                         id: plainComponent
                         Text {
                             width: Math.min(implicitWidth, chatView.width * 0.75)
-                            text: msgText
+                            text: messageItem.msgText
                             textFormat: Text.PlainText
                             wrapMode: Text.Wrap
-                            color: msgRole === "user" ? "#101010" : "#eeeeee"
+                            color: messageItem.msgRole === "user" ? "#101010" : "#eeeeee"
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 15
                         }
@@ -339,9 +341,10 @@ Item {
                             spacing: 6
 
                             Repeater {
-                                model: root.parseSegments(msgText)
+                                model: root.parseSegments(messageItem.msgText)
 
                                 delegate: Loader {
+                                    id: segmentLoader
                                     required property var modelData
                                     sourceComponent: modelData.type === "code" ? codeBlockComponent : textComponent
 
@@ -351,10 +354,10 @@ Item {
                                         id: textComponent
                                         Text {
                                             width: Math.min(implicitWidth, chatView.width * 0.75)
-                                            text: segmentData.content
+                                            text: segmentLoader.segmentData.content
                                             textFormat: Text.MarkdownText
                                             wrapMode: Text.Wrap
-                                            color: msgRole === "user" ? "#101010" : "#eeeeee"
+                                            color: messageItem.msgRole === "user" ? "#101010" : "#eeeeee"
                                             font.family: "JetBrainsMono Nerd Font"
                                             font.pixelSize: 15
                                         }
@@ -376,7 +379,7 @@ Item {
                                                 anchors.top: parent.top
                                                 anchors.left: parent.left
                                                 width: Math.min(implicitWidth, chatView.width * 0.75) - 20
-                                                text: segmentData.content
+                                                text: segmentLoader.segmentData.content
                                                 wrapMode: Text.Wrap
                                                 color: "#a6e3a1"
                                                 font.family: "JetBrainsMono Nerd Font"
