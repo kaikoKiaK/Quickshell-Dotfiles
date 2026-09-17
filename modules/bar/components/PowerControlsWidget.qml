@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../../lockscreen"
 
 Item {
     id: root
@@ -13,7 +14,7 @@ Item {
         {
             icon: "",
             label: "lock",
-            cmd: ["bash", "-c", "sleep 0.5; hyprlock"]
+            action: () => LockState.lock()
         },
         {
             icon: "󰒲",
@@ -147,12 +148,17 @@ Item {
 
                     Process {
                         id: proc
-                        command: btn.modelData.cmd
+                        command: btn.modelData.cmd ?? []
                     }
 
                     TapHandler {
                         id: tapHandler
-                        onTapped: proc.running = true
+                        onTapped: {
+                            if (btn.modelData.action)
+                                btn.modelData.action();
+                            else
+                                proc.running = true;
+                        }
                     }
 
                     HoverHandler {

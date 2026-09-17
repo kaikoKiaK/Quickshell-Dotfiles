@@ -193,11 +193,20 @@ PanelWindow {
         color: "#101010"
         border.color: "#2a2a2a"
         border.width: 1
+        transformOrigin: Item.TopLeft
 
         HoverHandler {
             onHoveredChanged: {
                 root.popoutHovered = hovered;
                 root.refreshPopupHover();
+            }
+        }
+
+        scale: root.visible ? 1 : 0
+        Behavior on scale {
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.OutCubic
             }
         }
 

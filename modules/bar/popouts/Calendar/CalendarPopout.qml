@@ -121,16 +121,25 @@ PanelWindow {
         Rectangle {
             id: calendarPopout
             width: 390
-            height: 260
+            height: 230
             y: 0
             anchors.horizontalCenter: parent.horizontalCenter
             radius: 8
             color: "#101010"
             border.color: "#2a2a2a"
             border.width: 1
+            transformOrigin: Item.Top
 
             HoverHandler {
                 onHoveredChanged: root.clockWidget.popupHovered = hovered
+            }
+
+            scale: root.visible ? 1 : 0
+            Behavior on scale {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.OutCubic
+                }
             }
 
             opacity: root.visible ? 1 : 0

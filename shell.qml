@@ -4,12 +4,14 @@ import Quickshell
 import QtQuick
 import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import "modules/bar/"
 import "modules/bar/popouts/Calendar"
 import "modules/bar/popouts/Media"
 import "modules/bar/popouts/Monitors"
 import "modules/launcher/"
 import "modules/wallpaperChanger"
+import "modules/lockscreen"
 
 ShellRoot {
     id: shellRoot
@@ -27,6 +29,29 @@ ShellRoot {
         target: "randomWallpaper"
         function handle() {
             WallpaperManager.random();
+        }
+    }
+
+    IpcHandler {
+        target: "activateLockscreen"
+        function handle() {
+            LockState.lock();
+        }
+    }
+
+    LockContext {
+        id: lockContext
+        onUnlocked: LockState.unlock()
+    }
+
+    WlSessionLock {
+        id: lock
+        locked: LockState.locked
+        WlSessionLockSurface {
+            LockSurface {
+                anchors.fill: parent
+                context: lockContext
+            }
         }
     }
 
