@@ -13,6 +13,8 @@ import "modules/launcher/"
 import "modules/wallpaperChanger"
 import "modules/lockscreen"
 
+// import "modules/notification"
+
 ShellRoot {
     id: shellRoot
 
@@ -55,6 +57,11 @@ ShellRoot {
         }
     }
 
+    // NotificationPopups {
+    //     id: notificationPopups
+    //     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+    // }
+
     Variants {
         model: Quickshell.screens
 
@@ -73,20 +80,20 @@ ShellRoot {
 
             CalendarPopout {
                 targetScreen: screenRoot.modelData
-                barHeight: bar.implicitHeight
+                barHeight: bar.barHeight
                 clockWidget: bar.clockWidget
                 visible: bar.clockWidget.showCalendar
             }
 
             MediaPopout {
                 targetScreen: screenRoot.modelData
-                barHeight: bar.implicitHeight
+                barHeight: bar.barHeight
                 audioWidget: bar.audioWidget
             }
 
             MonitorsPopout {
                 targetScreen: screenRoot.modelData
-                barHeight: bar.implicitHeight
+                barHeight: bar.barHeight
                 monitorsWidget: bar.monitorsWidget
             }
 

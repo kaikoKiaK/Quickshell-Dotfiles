@@ -8,22 +8,38 @@ PanelWindow {
     id: bar
     required property ShellScreen targetScreen
 
+    readonly property int barHeight: 45
+    readonly property int cardRoom: 220
+
     screen: targetScreen
     anchors {
         top: true
         left: true
         right: true
     }
-    implicitHeight: 45
+    implicitHeight: barHeight + cardRoom
     color: "transparent"
-    exclusiveZone: implicitHeight
+    exclusiveZone: barHeight
+
+    mask: Region {
+        item: strip
+        Region {
+            item: clockWidget
+        }
+    }
 
     property alias audioWidget: audioWidget
     property alias clockWidget: clockWidget
     property alias monitorsWidget: monitorsWidget
 
     Item {
-        anchors.fill: parent
+        id: strip
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
+        height: bar.barHeight
 
         WorkspacesWidget {
             id: workspacesWidget
@@ -67,8 +83,12 @@ PanelWindow {
 
         ClockWidget {
             id: clockWidget
-            anchors.centerIn: parent
-            height: parent.height - 10
+            z: 1
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 5
+            // anchors.centerIn: parent
+            // height: parent.height - 10
         }
 
         CpuMemoryWidget {
@@ -87,4 +107,10 @@ PanelWindow {
             height: parent.height - 10
         }
     }
+
+    // Item {
+    //     anchors.fill: parent
+    //
+    //
+    // }
 }

@@ -73,7 +73,7 @@ Item {
 
     Process {
         id: tempReader
-        command: ["cat", "/sys/class/thermal/thermal_zone2/temp"]
+        command: ["cat", "/sys/class/thermal/thermal_zone3/temp"]
         stdout: SplitParser {
             onRead: function (line) {
                 root.cpuTemp = parseFloat(line) / 1000;

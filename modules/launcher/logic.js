@@ -83,7 +83,7 @@ function combinedResults(apps, files, query) {
   var results = query.length >= 2 ? appEntries.concat(files) : appEntries
   var mathResult = evaluateMath(query)
   if (mathResult !== null) {
-    results = [{ kind: "calc", name: query.trim() + " = " + mathResult, result: String(mathResult) }].concat(results)
+    results = [{ kind: "calc", name: mathResult, result: String(mathResult) }].concat(results)
   }
   return results
 }
