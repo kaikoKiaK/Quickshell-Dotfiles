@@ -79,6 +79,7 @@ PanelWindow {
             anchors.left: aiChatToggle.right
             anchors.verticalCenter: parent.verticalCenter
             height: parent.height - 10
+            anchors.leftMargin: -1
         }
 
         ClockWidget {

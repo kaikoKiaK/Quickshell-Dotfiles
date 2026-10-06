@@ -67,8 +67,6 @@ Item {
             topRightRadius: 5
             bottomLeftRadius: 0
             bottomRightRadius: 5
-            border.color: "#eeeeee"
-            border.width: 1
             opacity: hoverHandler.hovered ? 0.35 : 0
             Behavior on opacity {
                 NumberAnimation {

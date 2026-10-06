@@ -21,8 +21,6 @@ Item {
         Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: "#eeeeee"
-            border.width: 1
             opacity: hoverHandler.hovered ? 0.35 : 0
             Behavior on opacity {
                 NumberAnimation {
@@ -165,7 +163,6 @@ Item {
                 bottomRightRadius: 8
                 color: "#101010"
                 border.color: "#2a2a2a"
-                border.width: 1
 
                 ChatWindow {
                     id: chatWindowInstance

@@ -96,8 +96,8 @@ Item {
             anchors.fill: parent
             radius: parent.radius
             color: "transparent"
-            border.color: root.cpuPercent > 80 || root.memPercent > 80 ? "#ff5555" : "#eeeeee"
-            border.width: 1
+            // border.color: root.cpuPercent > 80 || root.memPercent > 80 ? "#ff5555" : "#eeeeee"
+            // border.width: 1
             opacity: hoverHandler.hovered ? 0.35 : 0
             Behavior on opacity {
                 NumberAnimation {

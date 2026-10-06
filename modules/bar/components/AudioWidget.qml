@@ -245,8 +245,6 @@ Item {
         Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: root.muted ? "#666666" : "#eeeeee"
-            border.width: 1
             opacity: hoverHandler.hovered ? 0.35 : 0
             Behavior on opacity {
                 NumberAnimation {

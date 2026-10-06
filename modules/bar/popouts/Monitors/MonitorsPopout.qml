@@ -18,7 +18,17 @@ PanelWindow {
     implicitHeight: barHeight + monitorsPopout.height + monitorsPopout.border.width * 2
     color: "transparent"
     exclusiveZone: 0
-    visible: root.monitorsWidget.showMonitors
+
+    readonly property bool open: root.monitorsWidget.showMonitors
+    property real progress: open ? 1 : 0
+    Behavior on progress {
+        NumberAnimation {
+            duration: 300
+            easing.type: root.open ? Easing.OutCubic : Easing.InCubic
+        }
+    }
+
+    visible: open || progress > 0
 
     property var monitors: []
     property int selectedMonitor: -1
@@ -202,21 +212,8 @@ PanelWindow {
             }
         }
 
-        scale: root.visible ? 1 : 0
-        Behavior on scale {
-            NumberAnimation {
-                duration: 300
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        opacity: root.visible ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
+        scale: root.progress
+        opacity: Math.min(1, root.progress * 2)
 
         Column {
             anchors.fill: parent

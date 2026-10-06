@@ -10,6 +10,17 @@ Item {
     property bool _showPopup: false
     readonly property bool showMonitors: _showPopup || popupHovered
 
+    HoverHandler {
+        id: hoverHandler
+        onHoveredChanged: {
+            if (hovered) {
+                hidetimer.stop();
+            } else {
+                hidetimer.restart();
+            }
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         color: "#101010"
@@ -25,8 +36,6 @@ Item {
             bottomRightRadius: 0
             topLeftRadius: 5
             bottomLeftRadius: 5
-            border.color: "#eeeeee"
-            border.width: 1
             opacity: hoverHandler.hovered ? 0.35 : 0
             Behavior on opacity {
                 NumberAnimation {
@@ -75,15 +84,17 @@ Item {
             }
         }
 
-        HoverHandler {
-            id: hoverHandler
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onHoveredChanged: {
-                if (hovered) {
-                    hidetimer.stop();
-                    root._showPopup = true;
-                } else {
-                    hidetimer.restart();
+            onClicked: {
+                root._showPopup = !root._showPopup;
+                hidetimer.stop();
+            }
+            onReleased: {
+                if (!hoverHandler.hovered) {
+                    hidetimer.start();
                 }
             }
         }
