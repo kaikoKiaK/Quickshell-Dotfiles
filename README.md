@@ -13,6 +13,34 @@ This repository is meant to hold the config, scripts, and styling used to shape 
 - `themes/` – colors, styling, and appearance config
 - `config/` – additional dotfiles and application settings
 
+## Dependencies
+
+This configuration requires the following to function properly:
+
+### Core Requirements
+- **[Quickshell](https://github.com/quickshell/quickshell)** – A Qt-based shell replacement for Wayland. This is the primary framework for the entire dotfiles setup.
+
+### Required Tools
+- **fd** – Fast file finder used by the launcher's file search functionality
+- **wl-copy** – Wayland clipboard utility for copying calculator results
+- **xdg-open** – Standard tool for opening files with default applications
+
+### Required Qt Modules
+- **QtQuick** – Qt's declarative UI framework
+- **QtQuick.Controls** – Standard UI controls
+
+### Quickshell-specific Modules
+- **Quickshell.Io** – Input/Output operations
+- **Quickshell.Hyprland** – Hyprland window manager integration
+- **Quickshell.Wayland** – Wayland protocol support
+
+### Fonts
+- **JetBrainsMono Nerd Font** – Used throughout the UI for a consistent monospace appearance with Nerd Font icons
+
+### Optional
+- **mpd** (Music Player Daemon) – For media widget functionality
+- **hyprctl** – Hyprland control utility for workspace and monitor information
+
 ## Quick setup
 
 ```bash
